@@ -129,13 +129,18 @@ class FrictionObject(GravityObject):
         value
         """
         super(FrictionObject, self).__init__(stage)
-        self.friction = 0.35
+        self.friction = 0
 
     def apply_friction(self):
         """
         Applies friction to deltaX
         """
-        self.deltaX += self.friction
+        if self.deltaX - self.friction > 0:
+            self.deltaX -= self.friction
+        elif self.deltaX + self.friction < 0:
+            self.deltaX += self.friction
+        else: 
+            self.deltaX = 0
 
 
 class Ball(FrictionObject):
@@ -164,14 +169,18 @@ class Ball(FrictionObject):
         self.pushbox.x = self.draw_rect.x
         self.pushbox.y = self.draw_rect.y
 
-        # Set state flags & such
+        # Set state flags & ball-specific physical members
         self.can_bounce = True
+        self.friction = 0.02
+        self.max_dy = 0 # Max dy since ball last bounced
+        self.proration = 0 # Derived from max dy to prorate bounce
 
     def update(self):
         """
         Moves ball and bounces it if it hits a
         stage boundary
         """
+        print "dy is " + str(self.deltaY)
         # Move along x-axis
         self.move_x()
 
@@ -185,20 +194,34 @@ class Ball(FrictionObject):
         self.check_col_y()
 
         # Tick the clock for event timekeeping
-        self.clock.tick()
+        #self.clock.tick()
 
     def bounce(self):
         """
-        Bounces ball when it collides with a stage 
-        boundary (ceiling, wall, floor)
-        Checks timer to ensure ball cannot bounce
-        too rapidly (thus creating "micro-bounces"
-        if the ball will not clear the ground by
-        the next frame)
+        Bounces ball off of a stage boundary
+        (ceiling, wall, floor)
         """
-        # Set deltaY equal to a proportion of inverse
         print "deltaY pre-bounce  : " + str(self.deltaY)
-        self.deltaY = -0.75*self.deltaY
+
+        # Record new max dy for initial bounce 
+        if self.deltaY > self.max_dy:
+            print "New max dy of " + str(self.max_dy)
+            self.max_dy = self.deltaY
+           
+            # Derive new proration value from new max dy
+            self.proration = 0.15*self.max_dy
+
+        # Modify deltaY by proration
+        self.deltaY = -self.deltaY + self.proration
+
+        # If modified dy is greater than or equal to 0,
+        #   ball has insufficient force to bounce back up,
+        #   and is declared grounded
+        if self.deltaY >= 0:
+            self.deltaY == 0
+            self.max_dy = 0
+            self.proration = 0
+            self.can_bounce = False
 
     def check_col_x(self):
         """
@@ -237,10 +260,18 @@ class Ball(FrictionObject):
             # Bounce off the floor
             if self.can_bounce:
                 self.bounce()
-            else:
-                self.deltaY = 0
-                self.apply_friction()
+            #else:
+                #self.deltaY = 0
+                # Reinitialize max_dy to reset bounce behavior
+                #self.max_dy = 0
 
+            # If ball is on the floor and moving horizontally,
+            #   apply friction to slow roll to a halt
+            else:
+                #print "dx pre-friction  : " + str(self.deltaX)
+                self.apply_friction()
+                #print "dx post-friction : " + str(self.deltaX)
+                
         # Ceiling collision
         elif self.pushbox.top < self.stage.ceiling:
             # Adjust rects
