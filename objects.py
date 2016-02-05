@@ -107,11 +107,38 @@ class GravityObject(MovableObject):
     """
     def __init__(self, stage):
         """
-        Calls superconstructor
+        Calls superconstructor and initializes 
+        gravity modifier
         """
         super(GravityObject, self).__init__(stage)
 
-class Ball(GravityObject):
+        # Object-specific gravity modifier
+        #   (modifies the base influence of stage
+        #   gravity)
+        self.grav_modifier = 0
+
+class FrictionObject(GravityObject):
+    """
+    Game object subject to friction (decay of deltaX)
+    Currently extends GravityObject, but I may change
+       this later to only implement friction
+    """
+    def __init__(self, stage):
+        """
+        Calls superconstructor and initializes friction
+        value
+        """
+        super(FrictionObject, self).__init__(stage)
+        self.friction = 0.35
+
+    def apply_friction(self):
+        """
+        Applies friction to deltaX
+        """
+        self.deltaX += self.friction
+
+
+class Ball(FrictionObject):
     """
     A bouncy ball that is subject to gravity.
     Meant to mimick a soft round ball like a
@@ -169,20 +196,9 @@ class Ball(GravityObject):
         if the ball will not clear the ground by
         the next frame)
         """
-        # Forcibly re-align pushbox & drawing rect
-        #   to floor to prevent being at or below 
-        #   floor for more than 1 frame
-        self.draw_rect.bottom = self.stage.floor
-        self.pushbox.bottom = self.stage.floor
-
         # Set deltaY equal to a proportion of inverse
-        # (arbitrarily, 75% of original value)
         print "deltaY pre-bounce  : " + str(self.deltaY)
-        if self.deltaY > 4.0:
-            self.deltaY = -0.75*self.deltaY
-        else:
-            self.deltaY = 0
-            #print "deltaY post-bounce : " + str(self.deltaY)
+        self.deltaY = -0.75*self.deltaY
 
     def check_col_x(self):
         """
@@ -190,13 +206,19 @@ class Ball(GravityObject):
         """
         # Left wall collision
         if self.pushbox.left < self.stage.left_wall:
-            # Set left edge to wall?
+            # Set left edge to wall
+            self.draw_rect.left = self.stage.left_wall
+            self.pushbox.left = self.stage.left_wall
+            
             # Invert deltaX
             self.deltaX = -self.deltaX
 
         # Right wall collision
         elif self.pushbox.right > self.stage.right_wall:
-            # Set right edge to wall?
+            # Set right edge to wall
+            self.draw_rect.right = self.stage.right_wall
+            self.pushbox.right = self.stage.right_wall
+
             # Invert deltaX
             self.deltaX = -self.deltaX
 
@@ -206,11 +228,24 @@ class Ball(GravityObject):
         """        
         # Floor collision
         if self.pushbox.bottom > self.stage.floor:
-            # Bounce off the floor if allowed
+            # Forcibly re-align pushbox & drawing rect
+            #   to floor to prevent being at or below 
+            #   floor for more than 1 frame
+            self.draw_rect.bottom = self.stage.floor
+            self.pushbox.bottom = self.stage.floor
+
+            # Bounce off the floor
             if self.can_bounce:
                 self.bounce()
+            else:
+                self.deltaY = 0
+                self.apply_friction()
 
         # Ceiling collision
         elif self.pushbox.top < self.stage.ceiling:
+            # Adjust rects
+            self.draw_rect.top = self.stage.ceiling
+            self.pushbox.top = self.stage.ceiling
+
             # Invert deltaY
             self.deltaY = -self.deltaY
