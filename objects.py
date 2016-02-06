@@ -211,9 +211,6 @@ class Ball(FrictionObject):
         # Check for collision (y-axis)
         self.check_col_y()
 
-        # DEBUG: What's dy and is it still going up?
-        print "dy : " + str(self.deltaY)
-
         # Tick the clock for event timekeeping
         #self.clock.tick()
 
@@ -221,10 +218,19 @@ class Ball(FrictionObject):
         """
         Applies a (usually large) amount to dx/dy
         in the specified direction (via string values
-        'U, D, L, R' for up, down, left or right)
+        'U', 'D', 'L', 'R' for up, down, left or right)
         """
         if direction == "U":
             self.deltaY -= force
+            # If ball is unbounceable (grounded), make it
+            # bounceable again
+            if not self.can_bounce:
+                self.can_bounce = True
+                # Reset max_dy and proration for recalculation
+                #   since the height of the ball's initial
+                #   fall been changed
+                self.max_dy = 0
+                self.proration = 0
         elif direction == "D":
             self.deltaY += force
         elif direction == "L":
@@ -321,10 +327,14 @@ class Ball(FrictionObject):
             #   in which to apply force to the ball
             if event.type == pyg.KEYDOWN:
                 if event.key == pyg.K_UP:
-                    print "Up pressed"
+                    #print "Up pressed"
+                    self.apply_force(8, "U")
                 elif event.key == pyg.K_DOWN:
-                    print "Down pressed"
+                    #print "Down pressed"
+                    self.apply_force(8, "D")
                 elif event.key == pyg.K_LEFT:
-                    print "Left pressed"
+                    #print "Left pressed"
+                    self.apply_force(8, "L")
                 elif event.key == pyg.K_RIGHT:
-                    print "Right pressed"
+                    #print "Right pressed"
+                    self.apply_force(8, "R")
