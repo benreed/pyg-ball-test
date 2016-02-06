@@ -117,6 +117,13 @@ class GravityObject(MovableObject):
         #   gravity)
         self.grav_modifier = 0
 
+        # State flag for whether or not object is
+        #   currently subject to stage gravity
+        #   (True by default)
+        #   (I know the name is dumb, but I needed
+        #   something concise that suggested a boolean)
+        self.is_gravity = True
+
 class FrictionObject(GravityObject):
     """
     Game object subject to friction (decay of deltaX)
@@ -129,6 +136,9 @@ class FrictionObject(GravityObject):
         value
         """
         super(FrictionObject, self).__init__(stage)
+
+        # Absolute friction value applied to decay
+        #   dx when apply_friction() is called
         self.friction = 0
 
     def apply_friction(self):
@@ -174,6 +184,10 @@ class Ball(FrictionObject):
         self.friction = 0.02
         self.max_dy = 0 # Max dy since ball last bounced
         self.proration = 0 # Derived from max dy to prorate bounce
+
+        # Initialize dy to a positive value so it'll start falling
+        #   if spawned in midair
+        self.deltaY = 0.01
 
     def update(self):
         """

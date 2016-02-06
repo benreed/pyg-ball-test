@@ -104,7 +104,7 @@ class PlayStage(Stage):
         pyg.draw.line(screen, con.GREEN, (self.left_wall, 0), (self.left_wall, con.SCREEN_HEIGHT))
         pyg.draw.line(screen, con.GREEN, (self.right_wall, 0), (self.right_wall, con.SCREEN_HEIGHT))
 
-        # Draw game objects
+        # Draw game objects (if there are any)
         if self.objects:
             for object in self.objects:
                 object.draw(screen)
@@ -115,5 +115,6 @@ class PlayStage(Stage):
         objects within the stage
         """
         for object in self.objects:
-            if isinstance(object, GravityObject):
-                object.deltaY += self.gravity
+            if isinstance(object, GravityObject) and object.is_gravity:
+                if not object.deltaY == 0:
+                    object.deltaY += self.gravity
