@@ -75,6 +75,7 @@ class PlayStage(Stage):
 
         # Instantiate test objects here
         self.objects = []
+        self.col_list = []
 
     def update(self):
         """
@@ -94,6 +95,7 @@ class PlayStage(Stage):
                 if not self.input_queue.empty():
                     event = self.input_queue.get()
                     object.input_queue.put(InputEvent(event.type, event.key))
+                # Update object states
                 object.update()
             
     def draw(self, screen):

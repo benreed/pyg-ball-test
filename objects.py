@@ -238,6 +238,17 @@ class Ball(FrictionObject):
         elif direction == "R":
             self.deltaX += force
 
+    def ball_col(self, axis):
+        """
+        Checks for collision with another Ball
+        along the specified axis (called by 
+        generic collision detection methods)
+        """
+        # Check along x axis
+        #if axis == "x":
+        # Check along y axis
+        #elif axis == "y":
+
     def bounce(self):
         """
         Bounces ball off of a stage boundary
@@ -266,6 +277,8 @@ class Ball(FrictionObject):
         """
         Checks for collisions along x-axis
         """
+        # Check ball collision here?
+
         # Left wall collision
         if self.pushbox.left < self.stage.left_wall:
             # Set left edge to wall
@@ -287,7 +300,9 @@ class Ball(FrictionObject):
     def check_col_y(self):
         """
         Checks for collisions along y-axis
-        """        
+        """
+        # Check ball collision here?
+        
         # Floor collision
         if self.pushbox.bottom > self.stage.floor:
             # Forcibly re-align pushbox & drawing rect

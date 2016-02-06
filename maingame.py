@@ -49,7 +49,9 @@ class App:
         # Instantiate test objects and refer them to whatever
         #   stage needs to be "on point"
         self.ball = Ball(self.current_stage)
+        self.ball2 = Ball(self.current_stage, 300, 70)
         self.current_stage.objects.append(self.ball)
+        self.current_stage.objects.append(self.ball2)
 
     def event_loop(self):
         """
