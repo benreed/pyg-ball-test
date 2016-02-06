@@ -1,3 +1,4 @@
+import Queue
 import pygame as pyg
 import constants as con
 
@@ -180,6 +181,7 @@ class Ball(FrictionObject):
         self.pushbox.y = self.draw_rect.y
 
         # Set state flags & ball-specific physical members
+        self.input_queue = Queue.Queue()
         self.can_bounce = True
         self.friction = 0.02
         self.max_dy = 0 # Max dy since ball last bounced
@@ -194,6 +196,9 @@ class Ball(FrictionObject):
         Moves ball and bounces it if it hits a
         stage boundary
         """
+        # DEBUG: Update key state & handle inpu
+        self.handle_input()
+
         # Move along x-axis
         self.move_x()
 
@@ -211,6 +216,21 @@ class Ball(FrictionObject):
 
         # Tick the clock for event timekeeping
         #self.clock.tick()
+
+    def apply_force(self, force, direction):
+        """
+        Applies a (usually large) amount to dx/dy
+        in the specified direction (via string values
+        'U, D, L, R' for up, down, left or right)
+        """
+        if direction == "U":
+            self.deltaY -= force
+        elif direction == "D":
+            self.deltaY += force
+        elif direction == "L":
+            self.deltaX -= force
+        elif direction == "R":
+            self.deltaX += force
 
     def bounce(self):
         """
@@ -231,7 +251,7 @@ class Ball(FrictionObject):
         #   ball has insufficient force to bounce back up,
         #   and is declared grounded
         if self.deltaY >= 0:
-            self.deltaY == 0
+            self.deltaY = 0
             self.max_dy = 0
             self.proration = 0
             self.can_bounce = False
@@ -274,10 +294,10 @@ class Ball(FrictionObject):
             if self.can_bounce:
                 self.bounce()
 
-            # If ball is unbounceable,
-            #   apply friction to slow roll to a halt
-            else:
-                self.apply_friction()
+        # If ball is unbounceable,
+        #   apply friction to slow roll to a halt
+        if not self.can_bounce:
+            self.apply_friction()
                 
         # Ceiling collision
         elif self.pushbox.top < self.stage.ceiling:
@@ -287,3 +307,24 @@ class Ball(FrictionObject):
 
             # Invert deltaY
             self.deltaY = -self.deltaY
+
+    def handle_input(self):
+        """
+        Handles keyboard input just to test the
+        apply_force() method
+        """
+        # If input queue not empty, get latest event
+        if not self.input_queue.empty():
+            event = self.input_queue.get()
+
+            # Look at key value to determine direction
+            #   in which to apply force to the ball
+            if event.type == pyg.KEYDOWN:
+                if event.key == pyg.K_UP:
+                    print "Up pressed"
+                elif event.key == pyg.K_DOWN:
+                    print "Down pressed"
+                elif event.key == pyg.K_LEFT:
+                    print "Left pressed"
+                elif event.key == pyg.K_RIGHT:
+                    print "Right pressed"

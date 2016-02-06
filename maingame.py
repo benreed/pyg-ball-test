@@ -57,11 +57,17 @@ class App:
         Called within main_loop()
         """
         for event in pyg.event.get():
+            # Poll for quit event
             if event.type == pyg.QUIT:
                 self.done = True
             elif event.type in (pyg.KEYUP, pyg.KEYDOWN):
+                # Update key state
                 self.keys = pyg.key.get_pressed()
-				
+
+                # Put a corresponding InputEvent onto
+                #   stage's input queue
+                self.current_stage.input_queue.put(InputEvent(event.type, event.key))
+
     def render(self):
         """
         Draws to the screen and updates the display

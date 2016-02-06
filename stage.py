@@ -12,8 +12,10 @@ Paul Vincent Craven at
 programarcadegames.com
 """
 
+import Queue
 import pygame as pyg
 import constants as con
+from input import InputEvent
 from objects import *
 
 """
@@ -41,6 +43,7 @@ class Stage(object):
         """
         self.background = pyg.Surface([con.SCREEN_WIDTH, con.SCREEN_HEIGHT])
         self.background.fill(con.BG_COLOR)
+        self.input_queue = Queue.Queue()
         
     def draw(self, screen):
         """
@@ -87,6 +90,10 @@ class PlayStage(Stage):
 
             # Update game object states
             for object in self.objects:
+                # Pass any input events along to stage objects
+                if not self.input_queue.empty():
+                    event = self.input_queue.get()
+                    object.input_queue.put(InputEvent(event.type, event.key))
                 object.update()
             
     def draw(self, screen):

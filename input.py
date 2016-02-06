@@ -19,7 +19,8 @@ class InputEvent:
     separated in time by events for different
     keys.)
     """
-    def __init__(self, type, key, timestamp):
+    def __init__(self, type, key):
+    #def __init__(self, type, key, timestamp):
         """
         Constructs an InputEvent with a Pygame
         event and a timestamp since previous
@@ -27,4 +28,4 @@ class InputEvent:
         """
         self.type = type
         self.key = key
-        self.timestamp = timestamp
+        #self.timestamp = timestamp
