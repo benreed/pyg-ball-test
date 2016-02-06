@@ -180,7 +180,6 @@ class Ball(FrictionObject):
         Moves ball and bounces it if it hits a
         stage boundary
         """
-        print "dy is " + str(self.deltaY)
         # Move along x-axis
         self.move_x()
 
@@ -193,6 +192,9 @@ class Ball(FrictionObject):
         # Check for collision (y-axis)
         self.check_col_y()
 
+        # DEBUG: What's dy and is it still going up?
+        print "dy : " + str(self.deltaY)
+
         # Tick the clock for event timekeeping
         #self.clock.tick()
 
@@ -201,17 +203,14 @@ class Ball(FrictionObject):
         Bounces ball off of a stage boundary
         (ceiling, wall, floor)
         """
-        print "deltaY pre-bounce  : " + str(self.deltaY)
-
         # Record new max dy for initial bounce 
         if self.deltaY > self.max_dy:
-            print "New max dy of " + str(self.max_dy)
             self.max_dy = self.deltaY
            
             # Derive new proration value from new max dy
             self.proration = 0.15*self.max_dy
 
-        # Modify deltaY by proration
+        # Modify inverted deltaY by proration
         self.deltaY = -self.deltaY + self.proration
 
         # If modified dy is greater than or equal to 0,
@@ -257,20 +256,14 @@ class Ball(FrictionObject):
             self.draw_rect.bottom = self.stage.floor
             self.pushbox.bottom = self.stage.floor
 
-            # Bounce off the floor
+            # Bounce off the floor, if allowed
             if self.can_bounce:
                 self.bounce()
-            #else:
-                #self.deltaY = 0
-                # Reinitialize max_dy to reset bounce behavior
-                #self.max_dy = 0
 
-            # If ball is on the floor and moving horizontally,
+            # If ball is unbounceable,
             #   apply friction to slow roll to a halt
             else:
-                #print "dx pre-friction  : " + str(self.deltaX)
                 self.apply_friction()
-                #print "dx post-friction : " + str(self.deltaX)
                 
         # Ceiling collision
         elif self.pushbox.top < self.stage.ceiling:
