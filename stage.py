@@ -73,9 +73,11 @@ class PlayStage(Stage):
         # Universal stage gravity
         self.gravity = stage["GRAVITY"]
 
+        # Collision event queue
+        #self.clsn_queue = Queue.Queue()
+
         # Instantiate test objects here
         self.objects = []
-        self.col_list = []
 
     def update(self):
         """
@@ -85,6 +87,8 @@ class PlayStage(Stage):
         versions)
         """
         if self.objects:
+            # DEBUG: Resolve any collisions from last update?
+
             # Apply gravity to all gravity-subject game
             #   objects in stage
             self.apply_gravity()

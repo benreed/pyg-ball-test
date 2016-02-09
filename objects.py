@@ -2,6 +2,13 @@ import Queue
 import pygame as pyg
 import constants as con
 
+class CollisionEvent:
+    """
+    Class encompassing a predicted collision event 
+    between objects to be queued for resolution
+    next update
+    """
+
 class TypedRect(pyg.Rect):
     """
     An extended Pygame rect with a type flag
@@ -25,16 +32,9 @@ class MovableObject(pyg.sprite.Sprite):
     def __init__(self, stage, x=50, y=50):
         super(MovableObject, self).__init__()
 
-        # Pygame clock to time events
-        self.clock = pyg.time.Clock()
-
         # Basic 2D speed dimensions
         self.deltaX = 5
         self.deltaY = 0
-
-        # Rectangle defining spatial coordinates
-        #   of pushbox
-        self.rect = TypedRect("Sprite", x, y, 30, 50)
 
         # Red surface as placeholder image
         self.image = pyg.Surface((30, 50))
@@ -46,10 +46,14 @@ class MovableObject(pyg.sprite.Sprite):
         self.draw_rect.y = y
 
         # Pushbox defines limits of sprite penetration
-        # NOT logically identical to the drawing rect
+        # (NOT logically identical to the drawing rect)
         self.pushbox = self.image.get_rect()
         self.pushbox.x = self.draw_rect.x
         self.pushbox.y = self.draw_rect.y
+        
+        # Collision queue used to store predicted 
+        #   collision events for processing
+        self.clsn_queue = Queue.Queue()
 
         # Reference to whatever stage the object
         #   inhabits (initially None)
@@ -64,9 +68,6 @@ class MovableObject(pyg.sprite.Sprite):
 
         # Move along y-axis
         self.move_y()
- 
-        # Tick the clock
-        self.clock.tick()
 
     def draw(self, screen):
         """
@@ -94,13 +95,6 @@ class MovableObject(pyg.sprite.Sprite):
         """
         self.draw_rect.y += self.deltaY
         self.pushbox.y += self.deltaY
-
-    def stop_bound(self):
-        """
-        Stops movement & adjusts position
-        when object collides with stage 
-        boundaries (ceiling, walls, floor)
-        """
 
 class GravityObject(MovableObject):
     """
@@ -186,6 +180,7 @@ class Ball(FrictionObject):
         self.friction = 0.02
         self.max_dy = 0 # Max dy since ball last bounced
         self.proration = 0 # Derived from max dy to prorate bounce
+        self.predict_rects = [] # DEBUG: List of step values 
 
         # Initialize dy to a positive value so it'll start falling
         #   if spawned in midair
@@ -196,8 +191,11 @@ class Ball(FrictionObject):
         Moves ball and bounces it if it hits a
         stage boundary
         """
-        # DEBUG: Update key state & handle inpu
+        # DEBUG: Update key state & handle input
         self.handle_input()
+        
+        # DEBUG: Predict collisions here?
+        self.clsn_predict()
 
         # Move along x-axis
         self.move_x()
@@ -210,9 +208,15 @@ class Ball(FrictionObject):
 
         # Check for collision (y-axis)
         self.check_col_y()
-
-        # Tick the clock for event timekeeping
-        #self.clock.tick()
+        
+    def draw(self, screen):
+        # Call parent draw()
+        super(Ball, self).draw(screen)
+        
+        # Draw projection rects
+        if con.DEBUG:
+            for rect in self.predict_rects:
+                pyg.draw.rect(screen, con.RED, rect, 1)
 
     def apply_force(self, force, direction):
         """
@@ -237,17 +241,6 @@ class Ball(FrictionObject):
             self.deltaX -= force
         elif direction == "R":
             self.deltaX += force
-
-    def ball_col(self, axis):
-        """
-        Checks for collision with another Ball
-        along the specified axis (called by 
-        generic collision detection methods)
-        """
-        # Check along x axis
-        #if axis == "x":
-        # Check along y axis
-        #elif axis == "y":
 
     def bounce(self):
         """
@@ -328,6 +321,25 @@ class Ball(FrictionObject):
 
             # Invert deltaY
             self.deltaY = -self.deltaY
+            
+    def clsn_predict(self):
+        """
+        Predicts next update position and tests for 
+        collisions in intervals along the path to 
+        that position
+        """
+        # Purge contents of old prediction list
+        self.predict_rects = []
+        
+        # Make projection rects for quarter-steps to expected update position
+        rect1 = pyg.rect.Rect(self.pushbox.x+(0.25*self.deltaX), self.pushbox.y+self.deltaY, self.pushbox.width, self.pushbox.height)
+        rect2 = pyg.rect.Rect(self.pushbox.x+(0.5*self.deltaX) , self.pushbox.y+self.deltaY, self.pushbox.width, self.pushbox.height)
+        rect3 = pyg.rect.Rect(self.pushbox.x+(0.75*self.deltaX), self.pushbox.y+self.deltaY, self.pushbox.width, self.pushbox.height)
+        rect4 = pyg.rect.Rect(self.pushbox.x+self.deltaX, self.pushbox.y+self.deltaY, self.pushbox.width, self.pushbox.height)
+        self.predict_rects.append(rect1)
+        self.predict_rects.append(rect2)
+        self.predict_rects.append(rect3)
+        self.predict_rects.append(rect4)
 
     def handle_input(self):
         """
