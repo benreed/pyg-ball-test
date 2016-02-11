@@ -73,9 +73,12 @@ class PlayStage(Stage):
         # Universal stage gravity
         self.gravity = stage["GRAVITY"]
 
-        # Collision event queue
-        #self.clsn_queue = Queue.Queue()
-
+        # DEBUG: Track max dx/dy achieved by a ball
+        self.max_ever_dx_right = 0
+        self.max_ever_dx_left =  0
+        self.max_ever_dy_up =    0
+        self.max_ever_dy_down =  0
+        
         # Instantiate test objects here
         self.objects = []
 
@@ -101,6 +104,20 @@ class PlayStage(Stage):
                     object.input_queue.put(InputEvent(event.type, event.key))
                 # Update object states
                 object.update()
+                
+                # DEBUG: Look for max deltas for cardinal directions
+                if object.deltaX < 0 and self.max_ever_dx_left > object.deltaX:
+                    self.max_ever_dx_left = object.deltaX
+                    print "New max dx left of  : " + str(self.max_ever_dx_left)
+                if object.deltaX > 0 and self.max_ever_dx_right < object.deltaX:
+                    self.max_ever_dx_right = object.deltaX
+                    print "New max dx right of : " + str(self.max_ever_dx_right)
+                if object.deltaY > 0 and self.max_ever_dy_down < object.deltaY:
+                    self.max_ever_dy_down = object.deltaY
+                    print "New max dy down of  : " + str(self.max_ever_dy_down)
+                if object.deltaY < 0 and self.max_ever_dy_up > object.deltaY:
+                    self.max_ever_dy_up = object.deltaY
+                    print "New max dy up of    : " + str(self.max_ever_dy_up)
             
     def draw(self, screen):
         """

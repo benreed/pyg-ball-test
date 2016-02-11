@@ -177,12 +177,12 @@ class Ball(FrictionObject):
         # Set state flags & ball-specific physical members
         self.input_queue = Queue.Queue()
         self.can_bounce = True
-        self.friction = 0.02
-        self.max_dy = 0 # Max dy since ball last bounced
-        self.proration = 0 # Derived from max dy to prorate bounce
-        self.predict_rects = [] # DEBUG: List of step values 
+        self.friction = 0.03 # Decays ball's roll across the ground
+        self.proration = 2 # Base decay applied to ball bounce off floor
+        self.predict_rects = [] # DEBUG: List of stepped positions for 
+                                #   collision prediction
 
-        # Initialize dy to a positive value so it'll start falling
+        # Initialize dy to a positive value so ball starts falling
         #   if spawned in midair
         self.deltaY = 0.01
 
@@ -195,7 +195,7 @@ class Ball(FrictionObject):
         self.handle_input()
         
         # DEBUG: Predict collisions here?
-        self.clsn_predict()
+        #self.clsn_predict()
 
         # Move along x-axis
         self.move_x()
@@ -208,6 +208,9 @@ class Ball(FrictionObject):
 
         # Check for collision (y-axis)
         self.check_col_y()
+        
+        # DEBUG: Predict collisions here?
+        self.clsn_predict()
         
     def draw(self, screen):
         # Call parent draw()
@@ -230,11 +233,6 @@ class Ball(FrictionObject):
             # bounceable again
             if not self.can_bounce:
                 self.can_bounce = True
-                # Reset max_dy and proration for recalculation
-                #   since the height of the ball's initial
-                #   fall been changed
-                self.max_dy = 0
-                self.proration = 0
         elif direction == "D":
             self.deltaY += force
         elif direction == "L":
@@ -247,14 +245,8 @@ class Ball(FrictionObject):
         Bounces ball off of a stage boundary
         (ceiling, wall, floor)
         """
-        # Record new max dy for initial bounce 
-        if self.deltaY > self.max_dy:
-            self.max_dy = self.deltaY
-           
-            # Derive new proration value from new max dy
-            self.proration = 0.15*self.max_dy
 
-        # Modify inverted deltaY by proration
+        # Modify inverted deltaY by proration and proportion
         self.deltaY = -self.deltaY + self.proration
 
         # If modified dy is greater than or equal to 0,
@@ -262,8 +254,6 @@ class Ball(FrictionObject):
         #   and is declared grounded
         if self.deltaY >= 0:
             self.deltaY = 0
-            self.max_dy = 0
-            self.proration = 0
             self.can_bounce = False
 
     def check_col_x(self):
@@ -278,8 +268,8 @@ class Ball(FrictionObject):
             self.draw_rect.left = self.stage.left_wall
             self.pushbox.left = self.stage.left_wall
             
-            # Invert deltaX
-            self.deltaX = -self.deltaX
+            # Invert deltaX & decay by proration
+            self.deltaX = -self.deltaX-self.proration
 
         # Right wall collision
         elif self.pushbox.right > self.stage.right_wall:
@@ -287,8 +277,8 @@ class Ball(FrictionObject):
             self.draw_rect.right = self.stage.right_wall
             self.pushbox.right = self.stage.right_wall
 
-            # Invert deltaX
-            self.deltaX = -self.deltaX
+            # Invert deltaX & decay by proration
+            self.deltaX = -self.deltaX+self.proration
 
     def check_col_y(self):
         """
@@ -319,8 +309,8 @@ class Ball(FrictionObject):
             self.draw_rect.top = self.stage.ceiling
             self.pushbox.top = self.stage.ceiling
 
-            # Invert deltaY
-            self.deltaY = -self.deltaY
+            # Invert deltaY & decay by proration
+            self.deltaY = -self.deltaY-self.proration
             
     def clsn_predict(self):
         """
@@ -332,9 +322,9 @@ class Ball(FrictionObject):
         self.predict_rects = []
         
         # Make projection rects for quarter-steps to expected update position
-        rect1 = pyg.rect.Rect(self.pushbox.x+(0.25*self.deltaX), self.pushbox.y+self.deltaY, self.pushbox.width, self.pushbox.height)
-        rect2 = pyg.rect.Rect(self.pushbox.x+(0.5*self.deltaX) , self.pushbox.y+self.deltaY, self.pushbox.width, self.pushbox.height)
-        rect3 = pyg.rect.Rect(self.pushbox.x+(0.75*self.deltaX), self.pushbox.y+self.deltaY, self.pushbox.width, self.pushbox.height)
+        rect1 = pyg.rect.Rect(self.pushbox.x+(0.25*self.deltaX), self.pushbox.y+(0.25*self.deltaY), self.pushbox.width, self.pushbox.height)
+        rect2 = pyg.rect.Rect(self.pushbox.x+(0.5*self.deltaX) , self.pushbox.y+(0.5*self.deltaY), self.pushbox.width, self.pushbox.height)
+        rect3 = pyg.rect.Rect(self.pushbox.x+(0.75*self.deltaX), self.pushbox.y+(0.75*self.deltaY), self.pushbox.width, self.pushbox.height)
         rect4 = pyg.rect.Rect(self.pushbox.x+self.deltaX, self.pushbox.y+self.deltaY, self.pushbox.width, self.pushbox.height)
         self.predict_rects.append(rect1)
         self.predict_rects.append(rect2)
